@@ -42,6 +42,10 @@ def hrrr_to_ds(date, formatter=hrrr_bucket_url_formatter_fct, hour=0):
     # Add the time coordinate to your dataset
     ds = ds.assign_coords(time=("time", time_array))
 
+    # remove all but a few vars
+    vars = ["UGRD", "VGRD", "TMP", "latitude", "longitude"]
+    ds = ds[vars]
+
     return ds
 
 
@@ -65,41 +69,12 @@ def get_nearest_from_latlon(ds, lat, lon, projection):
     return nearest_data
 
 
-def add_ds_to_df_no_dask(ds, df):
-    var_dict = {}
-    # vars = ["UGRD", "VGRD", "TMP"]
-    for variable in ds.data_vars:
-        var_dict[variable] = []
-    for i, row in df.iterrows():
-        lat = float(row["lat"])
-        lon = float(row["lon"])
-        time = row["time"]
-        print(f"getting data for lat: {lat}, lon: {lon}, time: {time}")
-        # ll_ds = get_nearest_from_latlon(ds, lat, lon, projection)
-        x, y = latlon_to_xy(lat, lon, projection)
-        ll_ds = ds.sel(x=x, y=y, time=time, method='nearest')
-        for variable in var_dict:
-            value = ll_ds[variable]
-            value = float(value.values)
-            var_dict[variable].append(value)
-
-    for variable in var_dict:
-        df[variable] = var_dict[variable]
-
-    return df
-
-
-
 def add_ds_to_df(ds, df):
-    # var_dict = {variable: [] for variable in ds.data_vars}
     vars = ["UGRD", "VGRD", "TMP", "latitude", "longitude"]
     var_dict = {variable: [] for variable in vars}
     
-    latitudes = df["lat"].values
-    longitudes = df["lon"].values
-
-    latitudes = [float(lat) for lat in latitudes]
-    longitudes = [float(lon) for lon in longitudes]
+    latitudes = [float(lat) for lat in df["lat"].values]
+    longitudes = [float(lon) for lon in df["lon"].values]
     times = pd.to_datetime(df["time"]).values
 
     coords = []
@@ -108,17 +83,20 @@ def add_ds_to_df(ds, df):
         coords.append((x, y))
     
     def fetch_data(x, y, time):
-        ll_ds = ds.sel(x=x, y=y, time=time, method='nearest')
+        print(f"Fetching data for x: {x}, y: {y}, time: {time}")
+        ll_ds = ds.sel(x=x, y=y, method='nearest')
+        ll_ds = ll_ds.sel(time=time, method='nearest')
         return {variable: float(ll_ds[variable].values) for variable in var_dict}
     
-    results = [dask.delayed(fetch_data)(x, y, time) for (x, y), time in zip(coords, times)]
-    
-    with ProgressBar():
-        results = dask.compute(*results)
-
-    for result in results:
-        for variable in result:
-            var_dict[variable].append(result[variable])
+    for (x, y), time in zip(coords, times):
+        try:
+            result = fetch_data(x, y, time)
+            for variable in result:
+                var_dict[variable].append(result[variable])
+        except InvalidIndexError:
+            # Handle the case where indexing fails
+            for variable in var_dict:
+                var_dict[variable].append(None)
     
     for variable in var_dict:
         df[variable] = var_dict[variable]

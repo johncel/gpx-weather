@@ -16,6 +16,13 @@ print(f"loading {FNAME}")
 df_wpt, df_trk = load_gpx(FNAME)
 df_trk
 
+#%%
+# only take 1 of 10 df_trk points
+df_trk = df_trk.iloc[::50, :]
+# reindex
+df_trk = df_trk.reset_index(drop=True)
+df_trk
+
 # %%
 df_trk = gpx.calculate_elapsed_time(df_trk, 10)
 df_trk
@@ -38,7 +45,7 @@ hrrr_ds
 # %%
 import dask
 
-dask.config.set(scheduler='threads')
+# dask.config.set(scheduler='threads')
 
 # %%
 # add forecast to the track
@@ -48,7 +55,7 @@ import numpy as np
 from dask.diagnostics import ProgressBar
 import pandas as pd
 
-def chunked_df_processing(ds, df, chunk_size=100):
+def chunked_df_processing(ds, df, chunk_size=5):
     chunks = np.array_split(df, max(1, len(df) // chunk_size))
     results = [dask.delayed(hrrr.add_ds_to_df)(ds, chunk.reset_index(drop=True)) for chunk in chunks]  # Reset index here
     
@@ -57,7 +64,8 @@ def chunked_df_processing(ds, df, chunk_size=100):
     
     return pd.concat(results, ignore_index=True)  # Ignore index to avoid issues with duplicate indices
 
-df_trk_with_forecast = chunked_df_processing(hrrr_ds, df_trk, chunk_size=100)
+# df_trk_with_forecast = chunked_df_processing(hrrr_ds, df_trk, chunk_size=100)
+df_trk_with_forecast = hrrr.add_ds_to_df(hrrr_ds, df_trk)
 
 # %%
 df_trk_with_forecast
@@ -86,3 +94,4 @@ df_trk_with_forecast["wind_direction_degrees"] = [wind_dir_from_u_v(u, v) for u,
 
 # %%
 df_trk_with_forecast
+# %%
