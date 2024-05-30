@@ -63,3 +63,30 @@ df_trk_with_forecast = chunked_df_processing(hrrr_ds, df_trk, chunk_size=100)
 df_trk_with_forecast
 
 # %%
+df_trk_with_forecast["wind_speed_mps"] = np.sqrt(df_trk_with_forecast["UGRD"]**2 + df_trk_with_forecast["VGRD"]**2)
+
+# %%
+def wind_dir_from_u_v(u, v):
+    # Calculate the angle in radians using atan2
+    theta = np.arctan2(v, u)
+    
+    # Convert from radians to degrees
+    theta_degrees = theta * 180 / np.pi
+    
+    # Calculate the meteorological wind direction
+    wind_direction = (270 - theta_degrees) % 360
+    
+    return wind_direction
+
+wind_dir_from_u_v(1, 0), wind_dir_from_u_v(0, 1), wind_dir_from_u_v(-1, 0), wind_dir_from_u_v(0, -1), wind_dir_from_u_v(1, 1), wind_dir_from_u_v(-1, 1), wind_dir_from_u_v(-1, -1), wind_dir_from_u_v(1, -1)
+
+#%%
+
+df_trk_with_forecast["wind_direction_degrees"] = [wind_dir_from_u_v(u, v) for u, v in zip(df_trk_with_forecast["UGRD"], df_trk_with_forecast["VGRD"])]
+
+# %%
+df_trk_with_forecast
+
+# %%
+
+np.arctan2(df_trk_with_forecast["UGRD"], df_trk_with_forecast["VGRD"]) * 180 / np.pi
