@@ -86,7 +86,3 @@ df_trk_with_forecast["wind_direction_degrees"] = [wind_dir_from_u_v(u, v) for u,
 
 # %%
 df_trk_with_forecast
-
-# %%
-
-np.arctan2(df_trk_with_forecast["UGRD"], df_trk_with_forecast["VGRD"]) * 180 / np.pi
