@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import pandas as pd
 import xml.etree.ElementTree as ET
 from geopy.distance import geodesic
@@ -9,7 +10,7 @@ def parse_gpx(xml_text):
     
     # Define the namespaces
     namespaces = {
-        '': 'http://www.topografix.com/GPX/1/1'
+        'default': 'http://www.topografix.com/GPX/1/1'
     }
     
     # Extract waypoint data
@@ -21,11 +22,22 @@ def parse_gpx(xml_text):
         waypoints.append({'name': name, 'lon': lon, 'lat': lat})
     
     # Create DataFrame
-    df = pd.DataFrame(waypoints)
-    return df
+    df_wpt = pd.DataFrame(waypoints)
+
+    # extract track data
+    trackpoints = []
+    for trkpt in root.findall('default:trk/default:trkseg/default:trkpt', namespaces):
+        lon = trkpt.attrib['lon']
+        lat = trkpt.attrib['lat']
+        trackpoints.append({'lon': lon, 'lat': lat})
+
+    # Create DataFrame
+    df_trk = pd.DataFrame(trackpoints)
+
+    return df_wpt, df_trk
 
 
-def calculate_elapsed_time(df, average_riding_speed_mps):
+def calculate_elapsed_time(df, average_riding_speed_mps, start_time=datetime.now()):
     # Compute distances between waypoints
     distances = []
     for i in range(1, len(df)):
@@ -33,6 +45,8 @@ def calculate_elapsed_time(df, average_riding_speed_mps):
         coords_2 = (df.loc[i, 'lat'], df.loc[i, 'lon'])
         distance = geodesic(coords_1, coords_2).meters
         distances.append(distance)
+
+    df["distance"] = [0] + distances
     
     # Compute elapsed times
     elapsed_times_seconds = [distance / average_riding_speed_mps for distance in distances]
@@ -43,6 +57,10 @@ def calculate_elapsed_time(df, average_riding_speed_mps):
     
     # Add elapsed time to DataFrame
     df['elapsed_time_minutes'] = cumulative_elapsed_time
+
+    dt = [start_time + timedelta(minutes=elapsed_time) for elapsed_time in cumulative_elapsed_time]
+    df['time'] = dt
+    
     return df
 
 
@@ -50,4 +68,7 @@ def load_gpx(fname):
     with open(fname, "r") as f:
         contents = f.read()
 
-    df = parse_gpx(contents)
+    print(f"reading {contents}")
+
+    df_wpt, df_trk = parse_gpx(contents)
+    return df_wpt, df_trk
