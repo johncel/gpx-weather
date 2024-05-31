@@ -213,6 +213,10 @@ scale_factor = 0.01
 for i, row in df_trk_with_forecast.iterrows():
     ax.arrow(row["lon"], row["lat"], row["UGRD"] * scale_factor, row["VGRD"] * scale_factor, head_width=0.00001, head_length=0.00001, fc='k', ec='k')
 
+# plot tcdc as a text number at each track point
+for i, row in df_trk_with_forecast.iterrows():
+    ax.text(row["lon"], row["lat"], f"{row['TCDC']}", fontsize=8)
+
 plt.show()
 # %%
 
