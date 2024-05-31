@@ -216,6 +216,7 @@ for i, row in df_trk_with_forecast.iterrows():
 # plot tcdc as a text number at each track point
 for i, row in df_trk_with_forecast.iterrows():
     ax.text(row["lon"], row["lat"], f"{row['TCDC']}", fontsize=8)
+    ax.text(row["lon"] + 0.05, row["lat"], f"{int(row['TMP']-273.15)}", fontsize=8, color='red')
 
 plt.show()
 # %%
