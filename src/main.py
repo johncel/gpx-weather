@@ -18,7 +18,7 @@ df_trk
 
 #%%
 # only take 1 of 10 df_trk points
-df_trk = df_trk.iloc[::50, :]
+df_trk = df_trk.iloc[::75, :]
 # reindex
 df_trk = df_trk.reset_index(drop=True)
 df_trk
@@ -179,5 +179,43 @@ average_tail_wind
 #average cross wind
 average_cross_wind = df_trk_with_forecast["cross_wind_mps"].mean()
 average_cross_wind
+
+# %%
+# plot the df_trk lat lon positions on a map
+import matplotlib.pyplot as plt
+import geopandas as gpd
+from shapely.geometry import Point
+
+#%%
+
+# Create a GeoDataFrame
+geometry = [Point(xy) for xy in zip(df_trk["lon"], df_trk["lat"])]
+gdf = gpd.GeoDataFrame(df_trk, geometry=geometry)
+
+# Plot the GeoDataFrame
+world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+# world = gpd.read_file(gpd.read_file('../shapes/ne_50m_coastline.shp'))
+fig, ax = plt.subplots(figsize=(10, 10))
+world.boundary.plot(ax=ax)
+gdf.plot(ax=ax, color='red')
+# set the extents to the track
+lat_buffer = 0.25
+lon_buffer = 0.25
+max_lat = df_trk["lat"].max() + lat_buffer
+min_lat = df_trk["lat"].min() - lat_buffer
+max_lon = df_trk["lon"].max() + lon_buffer
+min_lon = df_trk["lon"].min() - lon_buffer
+ax.set_xlim(min_lon, max_lon)
+ax.set_ylim(min_lat, max_lat)
+
+# add wind arrows at each track point
+scale_factor = 0.01
+for i, row in df_trk_with_forecast.iterrows():
+    ax.arrow(row["lon"], row["lat"], row["UGRD"] * scale_factor, row["VGRD"] * scale_factor, head_width=0.00001, head_length=0.00001, fc='k', ec='k')
+
+plt.show()
+# %%
+
+gpd.datasets.available
 
 # %%

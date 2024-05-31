@@ -25,6 +25,7 @@ def hrrr_to_ds(date, formatter=hrrr_bucket_url_formatter_fct, hour=0):
             f'{date.strftime(formatter)}/10m_above_ground/UGRD/10m_above_ground',
             f'{date.strftime(formatter)}/10m_above_ground/VGRD/10m_above_ground',
             f'{date.strftime(formatter)}/2m_above_ground/TMP/2m_above_ground',
+            f'{date.strftime(formatter)}/entire_atmosphere/TCDC/entire_atmosphere',
             ]
     
     fs = s3fs.S3FileSystem(anon=True)
@@ -43,7 +44,7 @@ def hrrr_to_ds(date, formatter=hrrr_bucket_url_formatter_fct, hour=0):
     ds = ds.assign_coords(time=("time", time_array))
 
     # remove all but a few vars
-    vars = ["UGRD", "VGRD", "TMP", "latitude", "longitude"]
+    vars = ["UGRD", "VGRD", "TMP", "TCDC", "latitude", "longitude"]
     ds = ds[vars]
 
     return ds
@@ -70,7 +71,7 @@ def get_nearest_from_latlon(ds, lat, lon, projection):
 
 
 def add_ds_to_df(ds, df):
-    vars = ["UGRD", "VGRD", "TMP", "latitude", "longitude"]
+    vars = ["UGRD", "VGRD", "TMP", "TCDC", "latitude", "longitude"]
     var_dict = {variable: [] for variable in vars}
     
     latitudes = [float(lat) for lat in df["lat"].values]

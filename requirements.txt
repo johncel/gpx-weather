@@ -6,3 +6,4 @@ cartopy
 dask
 distributed
 geopandas
+geodatasets
