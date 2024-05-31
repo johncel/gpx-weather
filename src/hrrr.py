@@ -102,3 +102,10 @@ def add_ds_to_df(ds, df):
         df[variable] = var_dict[variable]
 
     return df
+
+    def get_x_y_t_idx(x, y, time):
+        x_idx = np.argmin(np.abs(ds.x - x))
+        y_idx = np.argmin(np.abs(ds.y - y))
+        t_idx = np.argmin(np.abs(ds.time - time))
+        return x_idx, y_idx, t_idx
+
