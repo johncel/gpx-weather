@@ -10,8 +10,17 @@ importlib.reload(gpx)
 from gpx import load_gpx, calculate_elapsed_time
 
 #%%
+from datetime import datetime
+# start_time = datetime(2024, 6, 3, 13, 0, 0)
+start_time = datetime(2024, 6, 8, 13, 0, 0)
 
-FNAME="../assets/gpx/ALC_2024_Day_1_-_San_Francisco_-_Santa_Cruz.gpx"
+# FNAME="../assets/gpx/ALC_2024_Day_1_-_San_Francisco_-_Santa_Cruz.gpx"
+# FNAME="../assets/gpx/ALC_2024_Day_2_-_Santa_Cruz_-_King_City_CA.gpx"
+# FNAME="../assets/gpx/ALC_2024_Day_3_-_King_City_-_Paso_Robles.gpx"
+# FNAME="../assets/gpx/ALC_2024_Day_4_-_Paso_Robles_to_Santa_Maria.gpx"
+# FNAME="../assets/gpx/ALC_2024_Day_5_-_Santa_Maria_-_Lompoc.gpx"
+# FNAME="../assets/gpx/ALC_2024_Day_6_-_Lompoc_-_Ventura_CA.gpx"
+FNAME="../assets/gpx/ALC_2024_Day_7_-_Ventura_-_Santa_Monica.gpx"
 print(f"loading {FNAME}")
 df_wpt, df_trk = load_gpx(FNAME)
 df_trk
@@ -26,7 +35,8 @@ df_trk["lat"] = df_trk["lat"].astype(float)
 df_trk["lon"] = df_trk["lon"].astype(float)
 
 # %%
-df_trk = gpx.calculate_elapsed_time(df_trk, 10)
+# df_trk = gpx.calculate_elapsed_time(df_trk, 4, start_time=start_time)
+df_trk = gpx.calculate_elapsed_time(df_trk, 5, start_time=start_time)
 df_trk
 # %%
 # load the hrrr data
@@ -213,10 +223,16 @@ scale_factor = 0.01
 for i, row in df_trk_with_forecast.iterrows():
     ax.arrow(row["lon"], row["lat"], row["UGRD"] * scale_factor, row["VGRD"] * scale_factor, head_width=0.00001, head_length=0.00001, fc='k', ec='k')
 
+# # plot tcdc as a text number at each track point
+# for i, row in df_trk_with_forecast.iterrows():
+#     ax.text(row["lon"], row["lat"] + 0.05, f"{row['TCDC']}", fontsize=8)
+#     ax.text(row["lon"] + 0.05, row["lat"] + 0.05, f"{int((row['TMP']-273.15) * 1.8 + 32)}", fontsize=8, color='red')
+#     ax.text(row["lon"] + 0.15, row["lat"] + 0.05, f"{int(row['wind_speed_mps']*2)}", fontsize=8, color='red')
 # plot tcdc as a text number at each track point
 for i, row in df_trk_with_forecast.iterrows():
-    ax.text(row["lon"], row["lat"], f"{row['TCDC']}", fontsize=8)
-    ax.text(row["lon"] + 0.05, row["lat"], f"{int(row['TMP']-273.15)}", fontsize=8, color='red')
+    ax.text(row["lon"], row["lat"] + 0.05, f"{row['TCDC']}", fontsize=7)
+    ax.text(row["lon"], row["lat"] + 0.10, f"{int((row['TMP']-273.15) * 1.8 + 32)}", fontsize=7, color='red')
+    ax.text(row["lon"], row["lat"] + 0.15, f"{int(row['wind_speed_mps']*2)}", fontsize=7, color='red')
 
 plt.show()
 # %%

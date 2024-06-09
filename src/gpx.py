@@ -40,11 +40,15 @@ def parse_gpx(xml_text):
 def calculate_elapsed_time(df, average_riding_speed_mps, start_time=datetime.now()):
     # Compute distances between waypoints
     distances = []
+    total_distance = [0]
+    total_distance_m = 0
     for i in range(1, len(df)):
         coords_1 = (df.loc[i-1, 'lat'], df.loc[i-1, 'lon'])
         coords_2 = (df.loc[i, 'lat'], df.loc[i, 'lon'])
         distance = geodesic(coords_1, coords_2).meters
         distances.append(distance)
+        total_distance_m += distance
+        total_distance += [total_distance_m]
 
     df["distance"] = [0] + distances
     
@@ -60,6 +64,8 @@ def calculate_elapsed_time(df, average_riding_speed_mps, start_time=datetime.now
 
     dt = [start_time + timedelta(minutes=elapsed_time) for elapsed_time in cumulative_elapsed_time]
     df['time'] = dt
+    df['total_distance'] = total_distance
+    print(f"start_time: {start_time} elapsed_time: {cumulative_elapsed_time} tile: {dt} total distance: {total_distance} meters")
     
     return df
 
