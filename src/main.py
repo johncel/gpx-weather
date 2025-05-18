@@ -198,7 +198,7 @@ from shapely.geometry import Point
 
 #%%
 import os
-def plot_nartual_earth(fig, ax):
+def plot_natural_earth(fig, ax):
     # Define the files and their draw order
     layers = [
         # ("ne_110m_admin_0_boundary_lines_land", {"color": "black", "linewidth": 0.5}),
@@ -222,14 +222,14 @@ def plot_nartual_earth(fig, ax):
 
 #%%
 
-fig, ax = plt.subplots(figsize=(12, 8))
+fig, ax = plt.subplots(figsize=(24, 16), dpi=600)
 
 # Create a GeoDataFrame
 geometry = [Point(xy) for xy in zip(df_trk["lon"], df_trk["lat"])]
 gdf = gpd.GeoDataFrame(df_trk, geometry=geometry)
 
 
-plot_nartual_earth(fig, ax)
+plot_natural_earth(fig, ax)
 
 gdf.plot(ax=ax, color='red')
 
@@ -262,6 +262,65 @@ for i, row in df_trk_with_forecast.iterrows():
 plt.show()
 # %%
 
-gpd.datasets.available
+
+# %%
+import matplotlib.pyplot as plt
+import geopandas as gpd
+from shapely.geometry import Point
+
+# Create the GeoDataFrame
+geometry = [Point(xy) for xy in zip(df_trk["lon"], df_trk["lat"])]
+gdf = gpd.GeoDataFrame(df_trk, geometry=geometry)
+
+# Start figure
+fig, ax = plt.subplots(figsize=(24, 16), dpi=600)
+
+# Plot base map
+plot_natural_earth(fig, ax)
+
+# Plot only every 5th point to reduce visual density
+gdf.iloc[::5].plot(ax=ax, color='red', markersize=8, label='Track points')
+
+# Set map extent
+lat_buffer = 0.25
+lon_buffer = 0.25
+max_lat = df_trk["lat"].max() + lat_buffer
+min_lat = df_trk["lat"].min() - lat_buffer
+max_lon = df_trk["lon"].max() + lon_buffer
+min_lon = df_trk["lon"].min() - lon_buffer
+ax.set_xlim(min_lon, max_lon)
+ax.set_ylim(min_lat, max_lat)
+
+# Plot wind arrows with better visibility and arrowheads
+scale_factor = 0.01
+for i, row in df_trk_with_forecast.iloc[::5].iterrows():
+    ax.arrow(
+        row["lon"], row["lat"],
+        row["UGRD"] * scale_factor,
+        row["VGRD"] * scale_factor,
+        head_width=0.02,
+        head_length=0.03,
+        fc='black',
+        ec='black',
+        alpha=0.8
+    )
+
+# Add weather labels: cloud cover (TCDC), temperature, wind speed
+for i, row in df_trk_with_forecast.iloc[::5].iterrows():
+    lat = row["lat"]
+    lon = row["lon"]
+    temp_f = int((row["TMP"] - 273.15) * 1.8 + 32)
+    wind_mph = int(row["wind_speed_mps"] * 2.237)
+
+    ax.text(lon, lat + 0.01, f"Cloud: {row['TCDC']}", fontsize=8, ha='center', va='bottom')
+    ax.text(lon, lat + 0.02, f"{temp_f}°F", fontsize=8, color='red', ha='center', va='bottom')
+    ax.text(lon, lat + 0.03, f"{wind_mph} mph", fontsize=8, color='blue', ha='center', va='bottom')
+
+
+# Optional: add legend or grid
+ax.set_title("Wind Vectors & Forecast Along Track", fontsize=16)
+ax.axis("off")
+plt.tight_layout()
+plt.show()
 
 # %%
