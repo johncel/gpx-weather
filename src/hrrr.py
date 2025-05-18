@@ -1,13 +1,8 @@
-from datetime import datetime, timedelta
 import cartopy.crs as ccrs
-import dask
-import dask.array as da
-from dask.diagnostics import ProgressBar
 import numpy as np
 import pandas as pd
-import s3fs
 import xarray as xr
-
+import zarr
 hrrr_bucket_url_formatter_fct = "s3://hrrrzarr/sfc/%Y%m%d/%Y%m%d_%Hz_fcst.zarr"
 
 projection = ccrs.LambertConformal(central_longitude=262.5, 
@@ -28,17 +23,30 @@ def hrrr_to_ds(date, formatter=hrrr_bucket_url_formatter_fct, hour=0):
             f'{date.strftime(formatter)}/entire_atmosphere/TCDC/entire_atmosphere',
             ]
     
-    fs = s3fs.S3FileSystem(anon=True)
+    # fs = s3fs.S3FileSystem(anon=True)
+    # try:
+    #     dataset = xr.open_mfdataset([s3fs.S3Map(url, s3 = fs) for url in urls], engine='zarr')
+    # except FileNotFoundError as e:
+    #     return None
+    # except Exception as e:
+    #     # raise e
+    #     return None
+
     try:
-        dataset = xr.open_mfdataset([s3fs.S3Map(url, s3 = fs) for url in urls], engine='zarr')
+        storage_options = {
+            "anon": True,
+        }
+        zarr_store_list = [
+            zarr.storage.FsspecStore.from_url(url, storage_options=storage_options)
+            for url in urls
+        ]
+        dataset = xr.open_mfdataset(zarr_store_list, engine="zarr")
     except FileNotFoundError as e:
         return None
-    except Exception as e:
-        raise e
 
     ds = dataset.rename(projection_x_coordinate="x", projection_y_coordinate="y")
     # Create a time array (replace this with actual time data you have)
-    time_array = pd.date_range(start=date, periods=48, freq='H')  # Example: 48 hourly periods
+    time_array = pd.date_range(start=date, periods=48, freq='h')  # Example: 48 hourly periods
 
     # Add the time coordinate to your dataset
     ds = ds.assign_coords(time=("time", time_array))

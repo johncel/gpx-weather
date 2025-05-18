@@ -7,20 +7,20 @@ import gpx  # import your module
 
 # Reload the module to reflect changes
 importlib.reload(gpx)
-from gpx import load_gpx, calculate_elapsed_time
+from gpx import load_gpx
 
 #%%
 from datetime import datetime
 # start_time = datetime(2024, 6, 3, 13, 0, 0)
-start_time = datetime(2024, 6, 8, 13, 0, 0)
+start_time = datetime(2025, 5, 18, 13, 0, 0)
 
-# FNAME="../assets/gpx/ALC_2024_Day_1_-_San_Francisco_-_Santa_Cruz.gpx"
+FNAME="../assets/gpx/ALC_2024_Day_1_-_San_Francisco_-_Santa_Cruz.gpx"
 # FNAME="../assets/gpx/ALC_2024_Day_2_-_Santa_Cruz_-_King_City_CA.gpx"
 # FNAME="../assets/gpx/ALC_2024_Day_3_-_King_City_-_Paso_Robles.gpx"
 # FNAME="../assets/gpx/ALC_2024_Day_4_-_Paso_Robles_to_Santa_Maria.gpx"
 # FNAME="../assets/gpx/ALC_2024_Day_5_-_Santa_Maria_-_Lompoc.gpx"
 # FNAME="../assets/gpx/ALC_2024_Day_6_-_Lompoc_-_Ventura_CA.gpx"
-FNAME="../assets/gpx/ALC_2024_Day_7_-_Ventura_-_Santa_Monica.gpx"
+# FNAME="../assets/gpx/ALC_2024_Day_7_-_Ventura_-_Santa_Monica.gpx"
 print(f"loading {FNAME}")
 df_wpt, df_trk = load_gpx(FNAME)
 df_trk
@@ -197,17 +197,42 @@ import geopandas as gpd
 from shapely.geometry import Point
 
 #%%
+import os
+def plot_nartual_earth(fig, ax):
+    # Define the files and their draw order
+    layers = [
+        # ("ne_110m_admin_0_boundary_lines_land", {"color": "black", "linewidth": 0.5}),
+        # ("ne_110m_admin_0_countries", {"edgecolor": "gray", "facecolor": "none", "linewidth": 1}),
+        # ("ne_110m_populated_places", {"color": "red", "markersize": 5}),
+        ("ne_10m_land", {"color": "green", "linewidth": 0.5}),
+    ]
+    # print the current working directory
+    print(os.getcwd())
+
+    # Base path to the unzipped shapefiles
+    base_path = "../assets/natural_earth"
+
+    # Load and plot each shapefile
+    for layer_name, plot_kwargs in layers:
+        shp_path = f"{base_path}/{layer_name}.shp"
+        gdf = gpd.read_file(shp_path)
+    
+        # Use .plot() or .boundary.plot() depending on geometry type or desired style
+        gdf.plot(ax=ax, **plot_kwargs)
+
+#%%
+
+fig, ax = plt.subplots(figsize=(12, 8))
 
 # Create a GeoDataFrame
 geometry = [Point(xy) for xy in zip(df_trk["lon"], df_trk["lat"])]
 gdf = gpd.GeoDataFrame(df_trk, geometry=geometry)
 
-# Plot the GeoDataFrame
-world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-# world = gpd.read_file(gpd.read_file('../shapes/ne_50m_coastline.shp'))
-fig, ax = plt.subplots(figsize=(10, 10))
-world.boundary.plot(ax=ax)
+
+plot_nartual_earth(fig, ax)
+
 gdf.plot(ax=ax, color='red')
+
 # set the extents to the track
 lat_buffer = 0.25
 lon_buffer = 0.25
