@@ -94,22 +94,25 @@ def add_ds_to_df(ds, df):
     
     def fetch_data(x, y, time):
         print(f"Fetching data for x: {x}, y: {y}, time: {time}")
+
         ll_ds = ds.sel(x=x, y=y, method='nearest')
-        ll_ds = ll_ds.sel(time=time, method='nearest')
+        tz_time = pd.Timestamp(time).tz_localize("UTC")
+        ll_ds = ll_ds.sel(time=tz_time, method="nearest")
+
         return_dict = {variable: float(ll_ds[variable].values) for variable in vars}
         return_dict["hrrr_time"] = ll_ds.time.values
 
         return return_dict
     
     for (x, y), time in zip(coords, times):
-        try:
+        # try:
             result = fetch_data(x, y, time)
             for variable in result:
                 var_dict[variable].append(result[variable])
-        except InvalidIndexError:
-            # Handle the case where indexing fails
-            for variable in var_dict:
-                var_dict[variable].append(None)
+        # except Exception as e:
+        #     # Handle the case where indexing fails
+        #     for variable in var_dict:
+        #         var_dict[variable].append(None)
     
     for variable in var_dict:
         df[variable] = var_dict[variable]
