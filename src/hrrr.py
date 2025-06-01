@@ -81,6 +81,7 @@ def get_nearest_from_latlon(ds, lat, lon, projection):
 def add_ds_to_df(ds, df):
     vars = ["UGRD", "VGRD", "TMP", "TCDC", "latitude", "longitude"]
     var_dict = {variable: [] for variable in vars}
+    var_dict["hrrr_time"] = []
     
     latitudes = [float(lat) for lat in df["lat"].values]
     longitudes = [float(lon) for lon in df["lon"].values]
@@ -95,7 +96,10 @@ def add_ds_to_df(ds, df):
         print(f"Fetching data for x: {x}, y: {y}, time: {time}")
         ll_ds = ds.sel(x=x, y=y, method='nearest')
         ll_ds = ll_ds.sel(time=time, method='nearest')
-        return {variable: float(ll_ds[variable].values) for variable in var_dict}
+        return_dict = {variable: float(ll_ds[variable].values) for variable in vars}
+        return_dict["hrrr_time"] = ll_ds.time.values
+
+        return return_dict
     
     for (x, y), time in zip(coords, times):
         try:

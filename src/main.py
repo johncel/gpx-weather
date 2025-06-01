@@ -1,4 +1,5 @@
 #%%
+from datetime import datetime, timedelta, timezone
 import gpx
 import hrrr
 #%%
@@ -12,10 +13,18 @@ from gpx import load_gpx
 #%%
 from datetime import datetime
 # start_time = datetime(2024, 6, 3, 13, 0, 0)
-start_time = datetime(2025, 5, 18, 13, 0, 0)
+# start_time = datetime(2025, 5, 18, 13, 0, 0)
+# start_time = datetime(2023, 5, 3, 13, 0, 0)
+# start_time = datetime(2023, 6, 6, 13, 0, 0)
+start_time = datetime(2025, 6, 2, 13, 0, 0)
+hrrr_dt = datetime.now(timezone.utc) - timedelta(hours=2)
+# hrrr_dt = start_time
+#%%
+hrrr_dt
+#%%
 
-FNAME="../assets/gpx/ALC_2024_Day_1_-_San_Francisco_-_Santa_Cruz.gpx"
-# FNAME="../assets/gpx/ALC_2024_Day_2_-_Santa_Cruz_-_King_City_CA.gpx"
+# FNAME="../assets/gpx/ALC_2024_Day_1_-_San_Francisco_-_Santa_Cruz.gpx"
+FNAME="../assets/gpx/ALC_2024_Day_2_-_Santa_Cruz_-_King_City_CA.gpx"
 # FNAME="../assets/gpx/ALC_2024_Day_3_-_King_City_-_Paso_Robles.gpx"
 # FNAME="../assets/gpx/ALC_2024_Day_4_-_Paso_Robles_to_Santa_Maria.gpx"
 # FNAME="../assets/gpx/ALC_2024_Day_5_-_Santa_Maria_-_Lompoc.gpx"
@@ -35,8 +44,8 @@ df_trk["lat"] = df_trk["lat"].astype(float)
 df_trk["lon"] = df_trk["lon"].astype(float)
 
 # %%
-# df_trk = gpx.calculate_elapsed_time(df_trk, 4, start_time=start_time)
-df_trk = gpx.calculate_elapsed_time(df_trk, 5, start_time=start_time)
+df_trk = gpx.calculate_elapsed_time(df_trk, 4, start_time=start_time)
+# df_trk = gpx.calculate_elapsed_time(df_trk, 5, start_time=start_time)
 df_trk
 # %%
 # load the hrrr data
@@ -44,8 +53,6 @@ import hrrr
 importlib.reload(hrrr)
 
 # %%
-from datetime import datetime, timedelta
-hrrr_dt = datetime.now() - timedelta(hours=1)
 # quantize to the nearest 6 hours
 hrrr_dt = hrrr_dt.replace(hour=hrrr_dt.hour - hrrr_dt.hour % 6)
 hrrr_dt = hrrr_dt.replace(minute=0, second=0, microsecond=0)
